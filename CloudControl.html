@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP8266 Credential Manager</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+    </style>
+</head>
+<body>
+    <h1>ESP8266 Credential Manager</h1>
+    <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" required>
+    </div>
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" required>
+    </div>
+    <button onclick="submitCredentials()">Submit</button>
+    
+    <div id="status"></div>
+    
+    <h2>Device Responses</h2>
+    <div id="responses"></div>
+
+    <script>
+        // Initialize Firebase (replace with your config)
+   const firebaseConfig = {
+  apiKey: "AIzaSyC8xBP0XSqRnXgJjJKmqp-Fz2-ApSIH7gQ",
+  authDomain: "passcloudcontrol.firebaseapp.com",
+  projectId: "passcloudcontrol",
+  storageBucket: "passcloudcontrol.firebasestorage.app",
+  messagingSenderId: "817784179270",
+  appId: "1:817784179270:web:0f9ec2b8722af5fc9ad847",
+  measurementId: "G-358K4638X8"
+};
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        function submitCredentials() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showStatus('Please fill in all fields', 'error');
+                return;
+            }
+            
+            showStatus('Submitting credentials...', '');
+            
+            // Push new credentials to Firebase
+            const newCredentialRef = database.ref('credentials').push();
+            newCredentialRef.set({
+                username: username,
+                password: password,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                status: 'pending'
+            })
+            .then(() => {
+                showStatus('Credentials submitted successfully!', 'success');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+            })
+            .catch(error => {
+                showStatus('Error submitting credentials: ' + error.message, 'error');
+            });
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+        }
+        
+        // Listen for device responses
+        database.ref('responses').on('child_added', (snapshot) => {
+            const response = snapshot.val();
+            const responseDiv = document.createElement('div');
+            responseDiv.className = 'response';
+            responseDiv.innerHTML = `
+                <p><strong>${new Date(response.timestamp).toLocaleString()}</strong></p>
+                <p>${response.message}</p>
+                <hr>
+            `;
+            document.getElementById('responses').prepend(responseDiv);
+        });
+    </script>
+</body>
+</html>

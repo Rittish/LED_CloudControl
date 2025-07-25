@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --danger: #f72585;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --dark: #2b2d42;
+            --dark-light: #8d99ae;
+            --light: #edf2f4;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: var(--white);
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        h1 {
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+        
+        .form-container {
+            padding: 2rem;
+        }
+        
+        .motor-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .motor-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid #e9ecef;
+            transition: var(--transition);
+        }
+        
+        .motor-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .motor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .motor-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .motor-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.1) 0%, rgba(72, 149, 239, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+        
+        .motor-name {
+            font-weight: 500;
+        }
+        
+        .motor-status {
+            font-size: 0.8rem;
+            color: var(--dark-light);
+            margin-top: 0.2rem;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e9ecef;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: var(--white);
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        input:checked + .slider {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .timer-control {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .timer-input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .timer-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .timer-btn:hover {
+            background: var(--primary-light);
+        }
+        
+        .timer-display {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--dark-light);
+        }
+        
+        .remaining-time {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .logout-btn {
+            margin-top: 2rem;
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--danger) 0%, #f72585cc 100%);
+            color: var(--white);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+        }
+        
+        .powered-by {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--dark-light);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 12px;
+            }
+            
+            .form-container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="login-section">
+            <div class="header">
+                <h1>Welcome Back</h1>
+            </div>
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password">
+                </div>
+                <button id="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <div id="login-message" class="message"></div>
+                <div class="powered-by">
+                    Powered by Firebase
+                </div>
+            </div>
+        </div>
+        
+        <div id="motor-control" class="motor-control" style="display: none;">
+            <div class="header">
+                <h1>Motor Control Panel</h1>
+            </div>
+            <div class="form-container">
+                <div class="motor-grid">
+                    <div class="motor-card">
+                        <div class="motor-header">
+                            <div class="motor-info">
+                                <div class="motor-icon">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div>
+                                    <div class="motor-name">Motor 1</div>
+                                    <div class="motor-status" id="motor1-status">OFF</div>
+                                </div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="motor1-switch">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="timer-control">
+                            <input type="number" id="motor1-timer" class="timer-input" placeholder="Minutes" min="1" max="120">
+                            <button class="timer-btn" id="motor1-set-timer">Set Timer</button>
+                        </div>
+                        <div class="timer-display">
+                            Remaining: <span class="remaining-time" id="motor1-remaining">0</span> seconds
+                        </div>
+                    </div>
+                    
+                    <div class="motor-card">
+                        <div class="motor-header">
+                            <div class="motor-info">
+                                <div class="motor-icon">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div>
+                                    <div class="motor-name">Motor 2</div>
+                                    <div class="motor-status" id="motor2-status">OFF</div>
+                                </div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="motor2-switch">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="timer-control">
+                            <input type="number" id="motor2-timer" class="timer-input" placeholder="Minutes" min="1" max="120">
+                            <button class="timer-btn" id="motor2-set-timer">Set Timer</button>
+                        </div>
+                        <div class="timer-display">
+                            Remaining: <span class="remaining-time" id="motor2-remaining">0</span> seconds
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="logout-btn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+                
+                <div class="powered-by">
+                    Connected to Cloud
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJLYRHMgmK6karoW-IFQByAJHGA-acfQg",
+            authDomain: "cloudledauth.firebaseapp.com",
+            databaseURL: "https://cloudledauth-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cloudledauth",
+            storageBucket: "cloudledauth.appspot.com",
+            messagingSenderId: "1003730534270",
+            appId: "1:1003730534270:web:1b14a5e9d40cc6a623fd2f"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // DOM elements
+        const loginSection = document.getElementById('login-section');
+        const motorControl = document.getElementById('motor-control');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginMessage = document.getElementById('login-message');
+        
+        // Motor control elements
+        const motor1Switch = document.getElementById('motor1-switch');
+        const motor2Switch = document.getElementById('motor2-switch');
+        const motor1Status = document.getElementById('motor1-status');
+        const motor2Status = document.getElementById('motor2-status');
+        const motor1TimerInput = document.getElementById('motor1-timer');
+        const motor2TimerInput = document.getElementById('motor2-timer');
+        const motor1SetTimer = document.getElementById('motor1-set-timer');
+        const motor2SetTimer = document.getElementById('motor2-set-timer');
+        const motor1Remaining = document.getElementById('motor1-remaining');
+        const motor2Remaining = document.getElementById('motor2-remaining');
+
+        // Check auth state
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                loginSection.style.display = 'none';
+                motorControl.style.display = 'block';
+                setupMotorListeners();
+                syncMotorStates();
+            } else {
+                // User is signed out
+                loginSection.style.display = 'block';
+                motorControl.style.display = 'none';
+            }
+        });
+
+        // Login function
+        loginBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            if (!email || !password) {
+                showMessage('Please enter both email and password', 'error');
+                return;
+            }
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    showMessage('Login successful!', 'success');
+                })
+                .catch(error => {
+                    showMessage(error.message, 'error');
+                });
+        });
+
+        // Logout function
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    showMessage('Logged out successfully', 'success');
+                })
+                .catch(error => {
+                    showMessage(error.message, 'error');
+                });
+        });
+
+        // Setup motor control listeners
+        function setupMotorListeners() {
+            // Motor 1 switch
+            motor1Switch.addEventListener('change', () => {
+                const command = motor1Switch.checked ? 'ON' : 'OFF';
+                database.ref('motors/motor1/command').set(command);
+            });
+            
+            // Motor 2 switch
+            motor2Switch.addEventListener('change', () => {
+                const command = motor2Switch.checked ? 'ON' : 'OFF';
+                database.ref('motors/motor2/command').set(command);
+            });
+            
+            // Motor 1 timer set
+            motor1SetTimer.addEventListener('click', () => {
+                const minutes = parseInt(motor1TimerInput.value);
+                if (minutes > 0) {
+                    database.ref('motors/motor1/timer').set(minutes);
+                    showMessage(`Motor 1 timer set for ${minutes} minutes`, 'success');
+                } else {
+                    showMessage('Please enter a valid time (1-120 minutes)', 'error');
+                }
+            });
+            
+            // Motor 2 timer set
+            motor2SetTimer.addEventListener('click', () => {
+                const minutes = parseInt(motor2TimerInput.value);
+                if (minutes > 0) {
+                    database.ref('motors/motor2/timer').set(minutes);
+                    showMessage(`Motor 2 timer set for ${minutes} minutes`, 'success');
+                } else {
+                    showMessage('Please enter a valid time (1-120 minutes)', 'error');
+                }
+            });
+        }
+
+        // Sync motor states from Firebase
+        function syncMotorStates() {
+            // Motor 1 status
+            database.ref('motors/motor1/status').on('value', snapshot => {
+                const status = snapshot.val();
+                motor1Status.textContent = status || 'OFF';
+                motor1Switch.checked = status === 'ON';
+                motor1Status.style.color = status === 'ON' ? 'var(--success)' : 'var(--dark-light)';
+            });
+            
+            // Motor 2 status
+            database.ref('motors/motor2/status').on('value', snapshot => {
+                const status = snapshot.val();
+                motor2Status.textContent = status || 'OFF';
+                motor2Switch.checked = status === 'ON';
+                motor2Status.style.color = status === 'ON' ? 'var(--success)' : 'var(--dark-light)';
+            });
+            
+            // Motor 1 remaining time
+            database.ref('motors/motor1/remaining').on('value', snapshot => {
+                const remaining = snapshot.val() || 0;
+                motor1Remaining.textContent = remaining;
+            });
+            
+            // Motor 2 remaining time
+            database.ref('motors/motor2/remaining').on('value', snapshot => {
+                const remaining = snapshot.val() || 0;
+                motor2Remaining.textContent = remaining;
+            });
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            loginMessage.textContent = message;
+            loginMessage.className = 'message ' + type;
+            setTimeout(() => {
+                loginMessage.textContent = '';
+                loginMessage.className = 'message';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
